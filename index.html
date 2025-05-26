@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Arcade Definitivo Final</title>
+    <style>
+        :root {
+            --bg-color: #1a1a1a;
+            --accent: #00ff88;
+            --text: #ffffff;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background: var(--bg-color);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .nav {
+            background: #000000;
+            padding: 1rem;
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            border-bottom: 2px solid var(--accent);
+        }
+
+        .nav-button {
+            background: none;
+            border: 2px solid transparent;
+            color: var(--text);
+            padding: 0.8rem 2rem;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+
+        .nav-button.active {
+            border-color: var(--accent);
+            background: rgba(0, 255, 136, 0.1);
+            color: var(--accent);
+        }
+
+        .game-container {
+            flex: 1;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            position: relative;
+        }
+
+        .game-container.active {
+            display: flex;
+        }
+
+        .canvas-wrapper {
+            position: relative;
+            margin: 1rem;
+        }
+
+        canvas {
+            border: 3px solid var(--accent);
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+        }
+
+        .game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 2rem;
+            border-radius: 10px;
+            text-align: center;
+            display: none;
+            color: var(--accent);
+            border: 2px solid var(--accent);
+        }
+
+        .score-board {
+            position: absolute;
+            top: -50px;
+            left: 0;
+            font-size: 1.2rem;
+            color: var(--accent);
+        }
+
+        .controls {
+            margin-top: 20px;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .controls h3 {
+            margin: 0 0 10px 0;
+            color: var(--accent);
+        }
+
+        .controls p {
+            margin: 5px 0;
+        }
+
+        footer {
+            background: #000;
+            padding: 1rem;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            border-top: 2px solid var(--accent);
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <button class="nav-button active" data-game="snake">🐍 Snake</button>
+        <button class="nav-button" data-game="tetris">🎮 Tetris</button>
+        <button class="nav-button" data-game="pong">🏓 Pong</button>
+        <button class="nav-button" data-game="target">🎯 Target Practice</button>
+        <button class="nav-button" data-game="breakout">🕹️ Breakout</button>
+    </nav>
+
+    <!-- Snake -->
+    <div class="game-container active" id="snake-container">
+        <div class="canvas-wrapper">
+            <div class="score-board" id="snake-score">Puntos: 0</div>
+            <div class="game-over" id="snake-game-over">
+                <h2>¡Game Over!</h2>
+                <p>Puntuación: <span id="snake-final-score">0</span></p>
+                <button onclick="snake.initGame()">Reiniciar</button>
+            </div>
+            <canvas id="snakeCanvas" width="400" height="400"></canvas>
+        </div>
+        <div class="controls">
+            <h3>Controles</h3>
+            <p>↑ ↓ ← → : Movimiento</p>
+        </div>
+    </div>
+
+    <!-- Tetris -->
+    <div class="game-container" id="tetris-container">
+        <div class="canvas-wrapper">
+            <div class="score-board" id="tetris-score">Puntos: 0</div>
+            <div class="game-over" id="tetris-game-over">
+                <h2>¡Game Over!</h2>
+                <p>Puntuación: <span id="tetris-final-score">0</span></p>
+                <button onclick="tetris.initGame()">Reiniciar</button>
+            </div>
+            <canvas id="tetrisCanvas" width="300" height="600"></canvas>
+        </div>
+        <div class="controls">
+            <h3>Controles</h3>
+            <p>← → : Movimiento<br>↑ : Rotar<br>↓ : Caída rápida</p>
+        </div>
+    </div>
+
+    <!-- Pong -->
+    <div class="game-container" id="pong-container">
+        <div class="canvas-wrapper">
+            <div class="score-board">
+                <span id="pong-score1">0</span> - <span id="pong-score2">0</span>
+            </div>
+            <canvas id="pongCanvas" width="800" height="400"></canvas>
+        </div>
+        <div class="controls">
+            <h3>Controles</h3>
+            <p>Jugador 1: W/S<br>Jugador 2: ↑/↓</p>
+        </div>
+    </div>
+
+    <!-- Target Practice -->
+    <div class="game-container" id="target-container">
+        <div class="canvas-wrapper">
+            <div class="score-board" id="target-score">Puntos: 0</div>
+            <canvas id="targetCanvas" width="800" height="600"></canvas>
+        </div>
+        <div class="controls">
+            <h3>Controles</h3>
+            <p>← → : Movimiento<br>Espacio: Disparar</p>
+        </div>
+    </div>
+
+    <!-- Breakout -->
+    <div class="game-container" id="breakout-container">
+        <div class="canvas-wrapper">
+            <div class="score-board" id="breakout-score">Puntos: 0</div>
+            <canvas id="breakoutCanvas" width="800" height="600"></canvas>
+        </div>
+        <div class="controls">
+            <h3>Controles</h3>
+            <p>← → : Movimiento<br>Espacio: Lanzar pelota</p>
+        </div>
+    </div>
+
+    <footer>
+        <div><strong>🐍 Snake</strong><br>Récord: <span id="snake-highscore">0</span></div>
+        <div><strong>🎮 Tetris</strong><br>Récord: <span id="tetris-highscore">0</span></div>
+        <div><strong>🏓 Pong</strong><br>Máximo: <span id="pong-highscore">0</span></div>
+        <div><strong>🎯 Target Practice</strong><br>Máximo: <span id="target-highscore">0</span></div>
+        <div><strong>🕹️ Breakout</strong><br>Máximo: <span id="breakout-highscore">0</span></div>
+    </footer>
+
+<script>
+// ================= SISTEMA COMÚN =================
+const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+const sound = {
+    move: () => playSound(261.63, 0.1),
+    rotate: () => playSound(523.25, 0.1),
+    line: () => playSound([329.63, 392.00, 493.88], 0.3),
+    gameOver: () => playSound(200, 0.5, true),
+    shoot: () => playSound(800, 0.1),
+    brick: () => playSound(300, 0.1)
+};
+
+function playSound(freq, duration, descending = false) {
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    if (Array.isArray(freq)) {
+        freq.forEach((f, i) => {
+            oscillator.frequency.setValueAtTime(f, audioContext.currentTime + (i * 0.1));
+        });
+    } else {
+        oscillator.frequency.value = freq;
+        if (descending) {
+            oscillator.frequency.exponentialRampToValueAtTime(50, audioContext.currentTime + duration);
+        }
+    }
+
+    gainNode.gain.value = 0.1;
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
+
+    oscillator.start();
+    oscillator.stop(audioContext.currentTime + duration);
+}
+
+document.querySelectorAll('.nav-button').forEach(button => {
+    button.addEventListener('click', () => {
+        document.querySelectorAll('.game-container, .nav-button').forEach(el => {
+            el.classList.remove('active');
+        });
+        const game = button.dataset.game;
+        document.getElementById(`${game}-container`).classList.add('active');
+        button.classList.add('active');
+        
+        [snake, tetris, pong, target, breakout].forEach(game => game.stopGame());
+        
+        if (game === 'snake') snake.initGame();
+        else if (game === 'tetris') tetris.initGame();
+        else if (game === 'pong') pong.initGame();
+        else if (game === 'target') target.initGame();
+        else if (game === 'breakout') breakout.initGame();
+    });
+});
+
+const highScores = {
+    snake: localStorage.getItem('snakeHighScore') || 0,
+    tetris: localStorage.getItem('tetrisHighScore') || 0,
+    pong: localStorage.getItem('pongHighScore') || 0,
+    target: localStorage.getItem('targetHighScore') || 0,
+    breakout: localStorage.getItem('breakoutHighScore') || 0
+};
+
+function updateHighScore(game, score) {
+    if (score > highScores[game]) {
+        highScores[game] = score;
+        localStorage.setItem(`${game}HighScore`, score);
+        document.getElementById(`${game}-highscore`).textContent = score;
+    }
+}
+
+// ================= SNAKE =================
+const snake = (() => {
+    const canvas = document.getElementById('snakeCanvas');
+    const ctx = canvas.getContext('2d');
+    const gridSize = 20, tileSize = canvas.width / gridSize;
+    let snakeArr = [], food = {}, direction = 'right', nextDirection = 'right', score = 0, gameLoop;
+
+    const validMoves = {
+        up: ['left', 'right'],
+        down: ['left', 'right'],
+        left: ['up', 'down'],
+        right: ['up', 'down']
+    };
+
+    document.addEventListener('keydown', (e) => {
+        const newDir = {
+            'ArrowUp': 'up',
+            'ArrowDown': 'down',
+            'ArrowLeft': 'left',
+            'ArrowRight': 'right'
+        }[e.key];
+        
+        if (newDir && validMoves[direction].includes(newDir)) {
+            nextDirection = newDir;
+        }
+    });
+
+    return {
+        initGame() {
+            snakeArr = [{ x: 10, y: 10 }];
+            direction = nextDirection = 'right';
+            score = 0;
+            document.getElementById('snake-score').textContent = 'Puntos: 0';
+            document.getElementById('snake-game-over').style.display = 'none';
+            this.spawnFood();
+            clearInterval(gameLoop);
+            gameLoop = setInterval(() => this.update(), 100);
+        },
+
+        spawnFood() {
+            do {
+                food = { x: Math.floor(Math.random() * gridSize), y: Math.floor(Math.random() * gridSize) };
+            } while (snakeArr.some(segment => segment.x === food.x && segment.y === food.y));
+        },
+
+        update() {
+            direction = nextDirection;
+            const head = { ...snakeArr[0] };
+            
+            switch (direction) {
+                case 'up': head.y--; break;
+                case 'down': head.y++; break;
+                case 'left': head.x--; break;
+                case 'right': head.x++; break;
+            }
+
+            if (head.x < 0 || head.x >= gridSize || head.y < 0 || head.y >= gridSize ||
+                snakeArr.some(segment => segment.x === head.x && segment.y === head.y)) {
+                this.gameOver();
+                return;
+            }
+
+            snakeArr.unshift(head);
+
+            if (head.x === food.x && head.y === food.y) {
+                score += 10;
+                document.getElementById('snake-score').textContent = `Puntos: ${score}`;
+                sound.move();
+                this.spawnFood();
+            } else {
+                snakeArr.pop();
+            }
+
+            this.draw();
+        },
+
+        draw() {
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = '#00ff88';
+            snakeArr.forEach(segment => {
+                ctx.fillRect(segment.x * tileSize, segment.y * tileSize, tileSize - 2, tileSize - 2);
+            });
+
+            ctx.fillStyle = '#ff0000';
+            ctx.fillRect(food.x * tileSize, food.y * tileSize, tileSize - 2, tileSize - 2);
+        },
+
+        gameOver() {
+            clearInterval(gameLoop);
+            document.getElementById('snake-game-over').style.display = 'block';
+            document.getElementById('snake-final-score').textContent = score;
+            sound.gameOver();
+            updateHighScore('snake', score);
+        },
+
+        stopGame() { clearInterval(gameLoop); }
+    };
+})();
+
+// ================= TETRIS CORREGIDO =================
+const tetris = (() => {
+    const canvas = document.getElementById('tetrisCanvas');
+    const ctx = canvas.getContext('2d');
+    const BLOCK_SIZE = 30;
+    const COLS = 10, ROWS = 20;
+    const SHAPES = [
+        [[1, 1, 1, 1]], [[1, 1], [1, 1]], [[1, 1, 1], [0, 1, 0]],
+        [[1, 1, 1], [1, 0, 0]], [[1, 1, 1], [0, 0, 1]],
+        [[1, 1, 0], [0, 1, 1]], [[0, 1, 1], [1, 1, 0]]
+    ];
+    const COLORS = ['#00f0f0', '#f0f000', '#a000f0', '#f0a000', '#0000f0', '#00f000', '#f00000'];
+    
+    let board = [], currentPiece = null, currentPos = { x: 0, y: 0 }, score = 0, gameLoop;
+    let lastMove = 0, moveCooldown = 100, fastDrop = false, lastDrop = Date.now();
+    const normalSpeed = 1000, fastSpeed = 50;
+
+    return {
+        initGame() {
+            board = Array(ROWS).fill().map(() => Array(COLS).fill(0));
+            score = 0;
+            document.getElementById('tetris-score').textContent = 'Puntos: 0';
+            document.getElementById('tetris-game-over').style.display = 'none';
+            this.spawnPiece();
+            clearInterval(gameLoop);
+            gameLoop = setInterval(() => this.update(), 16);
+        },
+
+        spawnPiece() {
+            const pieceIdx = Math.floor(Math.random() * SHAPES.length);
+            currentPiece = {
+                shape: SHAPES[pieceIdx],
+                color: COLORS[pieceIdx]
+            };
+            currentPos = {
+                x: Math.floor(COLS/2) - Math.floor(currentPiece.shape[0].length/2),
+                y: 0
+            };
+            if (!this.canMove(0, 0)) {
+                this.gameOver();
+            }
+        },
+
+        canMove(offsetX, offsetY) {
+            return currentPiece.shape.every((row, dy) =>
+                row.every((cell, dx) => {
+                    if (!cell) return true;
+                    const newX = currentPos.x + dx + offsetX;
+                    const newY = currentPos.y + dy + offsetY;
+                    return newX >= 0 && newX < COLS && newY < ROWS && !board[newY][newX];
+                })
+            );
+        },
+
+        rotate() {
+            const rotated = currentPiece.shape[0].map((_, i) =>
+                currentPiece.shape.map(row => row[i]).reverse()
+            );
+            const prevShape = currentPiece.shape;
+            currentPiece.shape = rotated;
+            if (!this.canMove(0, 0)) {
+                currentPiece.shape = prevShape;
+            } else {
+                sound.rotate();
+            }
+            this.draw();
+        },
+
+        moveLeft() {
+            const now = Date.now();
+            if (now - lastMove > moveCooldown) {
+                if (this.canMove(-1, 0)) {
+                    currentPos.x--;
+                    this.draw();
+                }
+                lastMove = now;
+            }
+        },
+
+        moveRight() {
+            const now = Date.now();
+            if (now - lastMove > moveCooldown) {
+                if (this.canMove(1, 0)) {
+                    currentPos.x++;
+                    this.draw();
+                }
+                lastMove = now;
+            }
+        },
+
+        update() {
+            const now = Date.now();
+            const dropInterval = fastDrop ? fastSpeed : normalSpeed;
+            
+            if (now - lastDrop > dropInterval) {
+                if (this.canMove(0, 1)) {
+                    currentPos.y++;
+                } else {
+                    this.mergePiece();
+                    this.clearLines();
+                    this.spawnPiece();
+                }
+                lastDrop = now;
+                this.draw();
+            }
+        },
+
+        mergePiece() {
+            currentPiece.shape.forEach((row, dy) => {
+                row.forEach((cell, dx) => {
+                    if (cell) {
+                        board[currentPos.y + dy][currentPos.x + dx] = currentPiece.color;
+                    }
+                });
+            });
+        },
+
+        clearLines() {
+            let linesCleared = 0;
+            for (let y = ROWS - 1; y >= 0; y--) {
+                if (board[y].every(cell => cell)) {
+                    board.splice(y, 1);
+                    board.unshift(Array(COLS).fill(0));
+                    linesCleared++;
+                    y++;
+                }
+            }
+            if (linesCleared > 0) {
+                score += [40, 100, 300, 1200][linesCleared - 1];
+                document.getElementById('tetris-score').textContent = `Puntos: ${score}`;
+                sound.line();
+            }
+        },
+
+        draw() {
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            board.forEach((row, y) => {
+                row.forEach((color, x) => {
+                    if (color) {
+                        ctx.fillStyle = color;
+                        ctx.fillRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE - 1, BLOCK_SIZE - 1);
+                    }
+                });
+            });
+
+            ctx.fillStyle = currentPiece.color;
+            currentPiece.shape.forEach((row, dy) => {
+                row.forEach((cell, dx) => {
+                    if (cell) {
+                        ctx.fillRect(
+                            (currentPos.x + dx) * BLOCK_SIZE,
+                            (currentPos.y + dy) * BLOCK_SIZE,
+                            BLOCK_SIZE - 1,
+                            BLOCK_SIZE - 1
+                        );
+                    }
+                });
+            });
+        },
+
+        gameOver() {
+            clearInterval(gameLoop);
+            document.getElementById('tetris-game-over').style.display = 'block';
+            document.getElementById('tetris-final-score').textContent = score;
+            sound.gameOver();
+            updateHighScore('tetris', score);
+        },
+
+        stopGame() { clearInterval(gameLoop); },
+        setFastDrop(state) { 
+            fastDrop = state;
+            if (state) sound.move();
+        }
+    };
+})();
+
+// ================= PONG =================
+const pong = (() => {
+    const canvas = document.getElementById('pongCanvas');
+    const ctx = canvas.getContext('2d');
+    const PADDLE_HEIGHT = 80, PADDLE_WIDTH = 10;
+    let ball = { x: 400, y: 200, dx: 5, dy: 5 };
+    let paddle1 = 160, paddle2 = 160;
+    let score1 = 0, score2 = 0, gameLoop;
+
+    return {
+        initGame() {
+            ball = { x: 400, y: 200, dx: 5, dy: 5 };
+            paddle1 = paddle2 = 160;
+            score1 = score2 = 0;
+            document.getElementById('pong-score1').textContent = '0';
+            document.getElementById('pong-score2').textContent = '0';
+            clearInterval(gameLoop);
+            gameLoop = setInterval(() => this.update(), 16);
+        },
+
+        update() {
+            ball.x += ball.dx;
+            ball.y += ball.dy;
+
+            if (ball.y < 0 || ball.y > 390) ball.dy *= -1;
+            
+            if (ball.x < 20 && ball.y > paddle1 && ball.y < paddle1 + PADDLE_HEIGHT) {
+                ball.dx = Math.abs(ball.dx);
+                sound.move();
+            }
+            if (ball.x > 770 && ball.y > paddle2 && ball.y < paddle2 + PADDLE_HEIGHT) {
+                ball.dx = -Math.abs(ball.dx);
+                sound.move();
+            }
+
+            if (ball.x < 0) { score2++; document.getElementById('pong-score2').textContent = score2; this.reset(); }
+            if (ball.x > 790) { score1++; document.getElementById('pong-score1').textContent = score1; this.reset(); }
+
+            this.draw();
+        },
+
+        reset() {
+            ball = { x: 400, y: 200, dx: 5 * (Math.random() > 0.5 ? 1 : -1), dy: 5 };
+            updateHighScore('pong', Math.max(score1, score2));
+        },
+
+        draw() {
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, 800, 400);
+            
+            ctx.fillStyle = '#00ff88';
+            ctx.fillRect(10, paddle1, PADDLE_WIDTH, PADDLE_HEIGHT);
+            ctx.fillRect(780, paddle2, PADDLE_WIDTH, PADDLE_HEIGHT);
+            
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, 10, 0, Math.PI * 2);
+            ctx.fill();
+        },
+
+        movePaddle(player, dir) {
+            if (player === 1) paddle1 = Math.max(0, Math.min(320, paddle1 + dir * 20));
+            else paddle2 = Math.max(0, Math.min(320, paddle2 + dir * 20));
+        },
+
+        stopGame() { clearInterval(gameLoop); }
+    };
+})();
+
+// ================= TARGET PRACTICE =================
+const target = (() => {
+    const canvas = document.getElementById('targetCanvas');
+    const ctx = canvas.getContext('2d');
+    let player = { x: 400, y: 550 };
+    let bullets = [], targets = [], score = 0, gameLoop;
+    let lastShot = 0;  // Nueva variable para el cooldown
+    const shotCooldown = 300;  // 300ms de espera entre disparos
+
+    return {
+        initGame() {
+            player = { x: 400, y: 550 };
+            bullets = [];
+            targets = [];
+            score = 0;
+            lastShot = 0;  // Reiniciar cooldown al iniciar
+            this.spawnTargets();
+            document.getElementById('target-score').textContent = 'Puntos: 0';
+            clearInterval(gameLoop);
+            gameLoop = setInterval(() => this.update(), 16);
+        },
+
+        spawnTargets() {
+            targets = [];
+            for (let i = 0; i < 10; i++) {
+                targets.push({
+                    x: Math.random() * 700 + 50,
+                    y: Math.random() * 300 + 50,
+                    alive: true
+                });
+            }
+        },
+
+        update() {
+            bullets.forEach(bullet => {
+                bullet.y -= 7;
+                targets.forEach(target => {
+                    if (target.alive && 
+                        Math.abs(bullet.x - target.x) < 20 && 
+                        Math.abs(bullet.y - target.y) < 20) {
+                        target.alive = false;
+                        score += 100;
+                        document.getElementById('target-score').textContent = `Puntos: ${score}`;
+                        sound.shoot();
+                    }
+                });
+            });
+
+            bullets = bullets.filter(bullet => bullet.y > 0);
+            
+            if (targets.every(t => !t.alive)) this.spawnTargets();
+            
+            this.draw();
+        },
+
+        draw() {
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, 800, 600);
+
+            ctx.fillStyle = '#00ff88';
+            ctx.fillRect(player.x - 15, player.y, 30, 20);
+
+            ctx.fillStyle = '#ff0000';
+            targets.forEach(target => {
+                if (target.alive) {
+                    ctx.beginPath();
+                    ctx.arc(target.x, target.y, 20, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            });
+
+            ctx.fillStyle = '#ffffff';
+            bullets.forEach(bullet => {
+                ctx.fillRect(bullet.x - 2, bullet.y, 4, 10);
+            });
+        },
+
+        move(dir) {
+            player.x = Math.max(30, Math.min(770, player.x + dir * 7));
+        },
+
+        shoot() {
+            const now = Date.now();
+            if (now - lastShot > shotCooldown) {
+                bullets.push({ x: player.x, y: player.y });
+                sound.shoot();
+                lastShot = now;  // Actualizar último disparo
+            }
+        },
+
+        stopGame() { clearInterval(gameLoop); }
+    };
+})();
+
+// ================= BREAKOUT =================
+const breakout = (() => {
+    const canvas = document.getElementById('breakoutCanvas');
+    const ctx = canvas.getContext('2d');
+    let paddle = { x: 350, y: 550, width: 100 };
+    let balls = [], bricks = [], powerUps = [], score = 0, gameLoop;
+    let launched = false;
+
+    function createBricks() {
+        bricks = [];
+        for (let i = 0; i < 8; i++) {
+            for (let j = 0; j < 5; j++) {
+                bricks.push({ x: 50 + i * 90, y: 50 + j * 40, alive: true });
+            }
+        }
+    }
+
+    function checkCollision() {
+        bricks.forEach((brick, index) => {
+            if (brick.alive) {
+                balls.forEach(ball => {
+                    if (ball.x + 10 > brick.x &&
+                        ball.x - 10 < brick.x + 80 &&
+                        ball.y + 10 > brick.y &&
+                        ball.y - 10 < brick.y + 30) {
+                        
+                        const overlapX = Math.min(
+                            ball.x + 10 - brick.x,
+                            brick.x + 80 - (ball.x - 10)
+                        );
+                        const overlapY = Math.min(
+                            ball.y + 10 - brick.y,
+                            brick.y + 30 - (ball.y - 10)
+                        );
+
+                        if (overlapX < overlapY) {
+                            ball.dx *= -1;
+                        } else {
+                            ball.dy *= -1;
+                        }
+
+                        brick.alive = false;
+                        score += 50;
+                        document.getElementById('breakout-score').textContent = `Puntos: ${score}`;
+                        sound.brick();
+                        
+                        if (Math.random() < 0.2) {
+                            powerUps.push({
+                                x: brick.x + 40,
+                                y: brick.y + 15,
+                                type: Math.random() < 0.5 ? 'expand' : 'multi'
+                            });
+                        }
+                    }
+                });
+            }
+        });
+    }
+
+    return {
+        initGame() {
+            paddle = { x: 350, y: 550, width: 100 };
+            balls = [{ x: 400, y: 540, dx: 4, dy: -4 }];
+            score = 0;
+            launched = false;
+            powerUps = [];
+            createBricks();
+            document.getElementById('breakout-score').textContent = 'Puntos: 0';
+            clearInterval(gameLoop);
+            gameLoop = setInterval(() => this.update(), 16);
+        },
+
+        update() {
+            if (launched) {
+                balls.forEach(ball => {
+                    ball.x += ball.dx;
+                    ball.y += ball.dy;
+
+                    if (ball.x < 10 || ball.x > 790) ball.dx *= -1;
+                    if (ball.y < 10) ball.dy *= -1;
+
+                    if (ball.y > 540 && 
+                        ball.x > paddle.x - paddle.width/2 && 
+                        ball.x < paddle.x + paddle.width/2) {
+                        ball.dy = -Math.abs(ball.dy);
+                        sound.move();
+                    }
+
+                    if (ball.y > 600) {
+                        balls = balls.filter(b => b !== ball);
+                    }
+                });
+
+                checkCollision();
+
+                powerUps.forEach((pu, index) => {
+                    pu.y += 2;
+                    if (pu.y > paddle.y - 10 && 
+                        pu.x > paddle.x - paddle.width/2 && 
+                        pu.x < paddle.x + paddle.width/2) {
+                        
+                        if (pu.type === 'expand') {
+                            paddle.width = 150;
+                            setTimeout(() => paddle.width = 100, 10000);
+                        } else {
+                            balls.push(
+                                { x: balls[0].x, y: balls[0].y, dx: -balls[0].dx, dy: balls[0].dy },
+                                { x: balls[0].x, y: balls[0].y, dx: balls[0].dx, dy: -balls[0].dy }
+                            );
+                        }
+                        powerUps.splice(index, 1);
+                    }
+                });
+
+                if (balls.length === 0) this.gameOver();
+            }
+
+            if (bricks.every(b => !b.alive)) {
+                createBricks();
+                balls.forEach(b => b.dy *= 1.1);
+            }
+
+            this.draw();
+        },
+
+        draw() {
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, 800, 600);
+
+            ctx.fillStyle = '#00ff88';
+            ctx.fillRect(paddle.x - paddle.width/2, paddle.y, paddle.width, 20);
+
+            ctx.fillStyle = '#ffffff';
+            balls.forEach(ball => {
+                ctx.beginPath();
+                ctx.arc(ball.x, ball.y, 10, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            ctx.fillStyle = '#ff0000';
+            bricks.forEach(brick => {
+                if (brick.alive) {
+                    ctx.fillRect(brick.x, brick.y, 80, 30);
+                }
+            });
+
+            ctx.fillStyle = '#00f0f0';
+            powerUps.forEach(pu => {
+                ctx.fillRect(pu.x - 10, pu.y - 10, 20, 20);
+            });
+        },
+
+        move(dir) {
+            paddle.x = Math.max(paddle.width/2, Math.min(800 - paddle.width/2, paddle.x + dir * 20));
+            if (!launched) balls[0].x = paddle.x;
+        },
+
+        launch() {
+            launched = true;
+        },
+
+        gameOver() {
+            clearInterval(gameLoop);
+            updateHighScore('breakout', score);
+            alert(`Game Over! Puntuación: ${score}`);
+            this.initGame();
+        },
+
+        stopGame() { clearInterval(gameLoop); }
+    };
+})();
+
+// ================= CONTROL DE TECLADO =================
+const keyState = {};
+
+document.addEventListener('keydown', (e) => {
+    keyState[e.key] = true;
+    
+    if (document.querySelector('.game-container.active').id === 'tetris-container' && e.key === 'ArrowUp') {
+        tetris.rotate();
+    }
+});
+
+document.addEventListener('keyup', (e) => {
+    keyState[e.key] = false;
+});
+
+setInterval(() => {
+    const activeGame = document.querySelector('.game-container.active').id;
+    
+    if (activeGame === 'snake-container') {
+        // Controles manejados directamente en el event listener
+    }
+    else if (activeGame === 'tetris-container') {
+        if (keyState['ArrowLeft']) tetris.moveLeft();
+        if (keyState['ArrowRight']) tetris.moveRight();
+        tetris.setFastDrop(keyState['ArrowDown']);
+    }
+    else if (activeGame === 'pong-container') {
+        if (keyState['w']) pong.movePaddle(1, -1);
+        if (keyState['s']) pong.movePaddle(1, 1);
+        if (keyState['ArrowUp']) pong.movePaddle(2, -1);
+        if (keyState['ArrowDown']) pong.movePaddle(2, 1);
+    }
+    else if (activeGame === 'target-container') {
+        if (keyState['ArrowLeft']) target.move(-1);
+        if (keyState['ArrowRight']) target.move(1);
+        if (keyState[' ']) target.shoot();
+    }
+    else if (activeGame === 'breakout-container') {
+        if (keyState['ArrowLeft']) breakout.move(-1);
+        if (keyState['ArrowRight']) breakout.move(1);
+        if (keyState[' ']) breakout.launch();
+    }
+}, 16);
+
+// Inicialización
+document.querySelectorAll('[id$="-highscore"]').forEach(el => {
+    const game = el.id.split('-')[0];
+    el.textContent = highScores[game];
+});
+
+snake.initGame();
+</script>
+</body>
+</html>
